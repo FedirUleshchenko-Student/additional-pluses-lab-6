@@ -7,6 +7,7 @@
 // Variant 11
 
 #include <iostream>
+#include <coroutine>
 
 #include "global-consts.h"
 #include "Task.h"
@@ -18,14 +19,14 @@ using namespace std;
 int main() {
 
 	// set up all handles
-	Task::promise_type::Handle master_h;
-	vector<Task::promise_type::Handle> players_h;
+	coroutine_handle<> master_h;
+	vector<coroutine_handle<>> players_h;
 	players_h.reserve(GAMER_CNT);
 
 	// set up coroutines (Tasks)
 	// SHOULD NOT BE DESTROYED
-	Task mT = master( &players_h );
-	vector<Task> plT; plT.reserve(GAMER_CNT);
+	MasterTask mT = master( &players_h );
+	vector<PlayerTask> plT; plT.reserve(GAMER_CNT);
 	for (int id = 1; id <= GAMER_CNT; id++) {
 		if(id % 2 == 1)
 			plT.push_back(gamerSmart(id, &master_h));
@@ -38,11 +39,11 @@ int main() {
 
 	// link handles to corespondent coroutines
 	// ONLY POINTERS
-	master_h = Task::promise_type::Handle::from_address(mT.cor.address());
+	master_h = MasterTask::promise_type::Handle::from_address(mT.cor.address());
 	int id = 0;
 	for (auto& x : plT) {
 		players_h.push_back(
-			Task::promise_type::Handle::from_address(x.cor.address())
+			PlayerTask::promise_type::Handle::from_address(x.cor.address())
 		);
 	}
 

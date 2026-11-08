@@ -6,12 +6,12 @@ using namespace std;
 
 #pragma region MasterAwaiter
 MasterAwaiter::MasterAwaiter(
-	std::vector<Task::promise_type::Handle>* newPlayers,
+	std::vector<std::coroutine_handle<>>* newPlayers,
 	int nextPlayerId, int newAnswer)
 	: last_answer(newAnswer), players(newPlayers), next_player_id(nextPlayerId) {}
 
-Task::promise_type::Handle
-MasterAwaiter::await_suspend(Task::promise_type::Handle master_h) noexcept {
+coroutine_handle<>
+MasterAwaiter::await_suspend(MasterTask::promise_type::Handle master_h) noexcept {
 
 	//cout << "await_suspend master | answer = " << last_answer << endl;
 
@@ -26,27 +26,31 @@ MasterAwaiter::await_suspend(Task::promise_type::Handle master_h) noexcept {
 
 int MasterAwaiter::await_resume() const noexcept {
 	//cout << "await_resume master | guess = " << (*players)[next_player_id].promise().queries.back().guess << endl;
-	return (*players)[next_player_id].promise().queries.back().guess;
+	return
+		PlayerTask::promise_type::Handle::from_address((*players)[next_player_id].address())
+		.promise().queries.back().guess;
 }
 #pragma endregion
 
 #pragma region PlayerAwaiter
-PlayerAwaiter::PlayerAwaiter(int newGuess, Task::promise_type::Handle* gameMaster) :
+PlayerAwaiter::PlayerAwaiter(int newGuess, std::coroutine_handle<>* gameMaster) :
 	my_guess(newGuess), master_handle(gameMaster) {
 }
 
-Task::promise_type::Handle
-PlayerAwaiter::await_suspend(Task::promise_type::Handle player_h) noexcept {
+std::coroutine_handle<>
+PlayerAwaiter::await_suspend(PlayerTask::promise_type::Handle player_h) noexcept {
 	player_h.promise().queries.push_back({ my_guess, 0 });
-	master_handle->promise().queries.push_back({my_guess, 0});
+	MasterTask::promise_type::Handle::from_address(master_handle->address())
+		.promise().queries.push_back({my_guess, 0});
 	return *master_handle;
 }
 
 pair<vector<Query>::const_iterator, vector<Query>::const_iterator> PlayerAwaiter::await_resume() const noexcept {
-	vector<Query>::const_iterator st = (master_handle->promise().queries.size() >= GAMER_CNT) ?
-		master_handle->promise().queries.end() - GAMER_CNT : master_handle->promise().queries.begin();
+	auto master = MasterTask::promise_type::Handle::from_address(master_handle->address());
+	vector<Query>::const_iterator st = (master.promise().queries.size() >= GAMER_CNT) ?
+		master.promise().queries.end() - GAMER_CNT : master.promise().queries.begin();
 
-	return make_pair(st, master_handle->promise().queries.end());
+	return make_pair(st, master.promise().queries.end());
 }
 #pragma endregion
 

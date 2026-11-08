@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Task master(vector<Task::promise_type::Handle>* players)
+MasterTask master(vector<std::coroutine_handle<>>* playersCor)
 {
 	uniform_int_distribution<int> dist(MIN_VAL, MAX_VAL);
 	mt19937 gen(GLOBAL_SEED);
@@ -27,7 +27,7 @@ Task master(vector<Task::promise_type::Handle>* players)
 			break;
 		}
 
-		if (++id == players->size()) id = 0;
+		if (++id == playersCor->size()) id = 0;
 		lastAnswer = (seeked > guess) ? 1 : -1;
 	}
 
@@ -56,7 +56,7 @@ bool updateRanges(int& l, int& r,
 	return flag;
 }
 
-Task gamerSmart(int id, Task::promise_type::Handle* master) {
+PlayerTask gamerSmart(int id, std::coroutine_handle<>* masterCor) {
 	static int TEST_GUESS = 1;
 	int l = MIN_VAL;
 	int r = MAX_VAL + 1;
@@ -64,8 +64,10 @@ Task gamerSmart(int id, Task::promise_type::Handle* master) {
 	vector<Query>::const_iterator q_it1;
 	vector<Query>::const_iterator q_it2;
 
-	q_it1 = master->promise().queries.begin();
-	q_it2 = master->promise().queries.end();
+	auto master = MasterTask::promise_type::Handle::from_address(masterCor->address());
+
+	q_it1 = master.promise().queries.begin();
+	q_it2 = master.promise().queries.end();
 
 	updateRanges(l, r, q_it1, q_it2);
 
@@ -104,7 +106,7 @@ Task gamerSmart(int id, Task::promise_type::Handle* master) {
 		<< questions << " queries (counded only MY queries)" << endl;
 	cout << "[Gamer " << id << "] I've won. Ending this gamer's coroutine" << endl;
 	//outputAllQueries();
-	co_return{};
+	co_return;
 	/*
 	TEST_GUESS *= 15;
 	cout << "player id = " << id << " pushing = " << TEST_GUESS << endl;
@@ -158,8 +160,8 @@ int getRandomGuess(set<int>& included) {
 	while (included.count(curr) || curr - getLowerCnt(curr) < seeked) curr++;
 	return curr;
 }
-
-Task gamerStupid(int id, Task::promise_type::Handle* master) {
+	
+PlayerTask gamerStupid(int id, std::coroutine_handle<>* masterCor) {
 	static int TEST_GUESS = 1;
 
 	set<int> included;
@@ -167,8 +169,10 @@ Task gamerStupid(int id, Task::promise_type::Handle* master) {
 	vector<Query>::const_iterator q_it1;
 	vector<Query>::const_iterator q_it2;
 
-	q_it1 = master->promise().queries.begin();
-	q_it2 = master->promise().queries.end();
+	auto master = MasterTask::promise_type::Handle::from_address(masterCor->address());
+
+	q_it1 = master.promise().queries.begin();
+	q_it2 = master.promise().queries.end();
 
 	addIncluded(included, q_it1, q_it2);
 
@@ -195,5 +199,5 @@ Task gamerStupid(int id, Task::promise_type::Handle* master) {
 	cout << "[Gamer " << id << "] I've won by random, with = "
 		<< questions << " queries (counded only MY queries)" << endl;
 	cout << "[Gamer " << id << "] I've won. Ending this gamer's coroutine" << endl;
-	co_return{};
+	co_return;
 }

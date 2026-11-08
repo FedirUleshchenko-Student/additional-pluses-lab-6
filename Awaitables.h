@@ -3,36 +3,38 @@
 #include <vector>
 #include <utility>
 #include "Task.h"
+#include "PlayerTask.h"
+#include "MasterTask.h"
 #include "global-consts.h"
 
 struct MasterAwaiter {
 	int last_answer;
-	std::vector<Task::promise_type::Handle>* players;
+	std::vector<std::coroutine_handle<>>* players;
 	int next_player_id;
 	static const int IGNORED_VALUE = 2;
 
 	MasterAwaiter(
-		std::vector<Task::promise_type::Handle>* newPlayers,
+		std::vector<std::coroutine_handle<>>* newPlayers,
 		int nextPlayerId, int newAnswer);
 
 	constexpr bool await_ready() const noexcept { return false; }
 
-	Task::promise_type::Handle
-		await_suspend(Task::promise_type::Handle master_h) noexcept;
+	std::coroutine_handle<>
+		await_suspend(MasterTask::promise_type::Handle master_h) noexcept;
 
 	int await_resume() const noexcept;
 };
 
 struct PlayerAwaiter {
 	int my_guess;
-	Task::promise_type::Handle* master_handle;
+	std::coroutine_handle<>* master_handle;
 
-	PlayerAwaiter(int newGuess, Task::promise_type::Handle* gameMaster);
+	PlayerAwaiter(int newGuess, std::coroutine_handle<>* gameMaster);
 
 	constexpr bool await_ready() const noexcept { return false; }
 
-	Task::promise_type::Handle
-		await_suspend(Task::promise_type::Handle player_h) noexcept;
+	std::coroutine_handle<>
+		await_suspend(PlayerTask::promise_type::Handle player_h) noexcept;
 
 	std::pair<std::vector<Query>::const_iterator, std::vector<Query>::const_iterator>
 		await_resume() const noexcept;
