@@ -11,9 +11,9 @@ struct MasterAwaiter {
 	int next_player_id;
 	static const int IGNORED_VALUE = 2;
 
-	MasterAwaiter(int newAnswer,
+	MasterAwaiter(
 		std::vector<Task::promise_type::Handle>* newPlayers,
-		int nextPlayerId);
+		int nextPlayerId, int newAnswer);
 
 	constexpr bool await_ready() const noexcept { return false; }
 
@@ -34,6 +34,17 @@ struct PlayerAwaiter {
 	Task::promise_type::Handle
 		await_suspend(Task::promise_type::Handle player_h) noexcept;
 
-	std::pair<std::vector<int>::const_iterator, std::vector<int>::const_iterator>
+	std::pair<std::vector<Query>::const_iterator, std::vector<Query>::const_iterator>
 		await_resume() const noexcept;
+};
+
+struct FinalMasterAwaiter {
+	std::coroutine_handle<> winner_handle;
+
+	FinalMasterAwaiter(std::coroutine_handle<> x) :
+		winner_handle(x) {}
+
+	constexpr bool await_ready() const noexcept { return false; }
+	std::coroutine_handle<> await_suspend(std::coroutine_handle<>) noexcept;
+	constexpr void await_resume() const noexcept {}
 };

@@ -14,12 +14,26 @@ Task::promise_type::promise_type(int id, Handle* master)
 	: master_h(master) {
 }
 
+FinalMasterAwaiter Task::promise_type::final_suspend() noexcept {
+	return FinalMasterAwaiter{ winner_handle };
+}
+
+void Task::promise_type::return_value(std::pair<int, int> end_query) {
+	int player_id = end_query.first;
+	int answer = end_query.second;
+
+	// only if last answer = 0
+	if (answer == 0 && total_players
+		&& player_id >= 0 && player_id < total_players->size())
+		winner_handle = (*total_players)[player_id];
+}
+
 PlayerAwaiter Task::promise_type::yield_value(int my_guess) {
 	return PlayerAwaiter{ my_guess, master_h };
 }
 
 MasterAwaiter Task::promise_type::yield_value(pair<int, int> waiting_query) {
-	return MasterAwaiter{ waiting_query.first, total_players, waiting_query.second };
+	return MasterAwaiter{ total_players, waiting_query.first, waiting_query.second };
 }
 #pragma endregion
 
@@ -34,7 +48,6 @@ Task& Task::operator=(Task&& t) noexcept {
 	return *this;
 }
 Task::~Task() {
-	cout << "destructor called" << endl;
 	destroy();
 }
 #pragma endregion
@@ -45,7 +58,6 @@ Task::Task(promise_type::Handle coroutine) : cor(coroutine) {}
 bool Task::is_done() const { return !cor || cor.done(); }
 void Task::resume() { if (cor && !cor.done()) cor.resume(); }
 void Task::destroy() {
-	cout << "destroy called" << endl;
 	if (cor) {
 		cor.destroy();
 		cor = nullptr;

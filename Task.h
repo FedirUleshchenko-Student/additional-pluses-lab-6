@@ -6,17 +6,25 @@
 
 struct PlayerAwaiter;
 struct MasterAwaiter;
+struct FinalMasterAwaiter;
+
+struct Query {
+	Query() = default;
+	Query(int newGuess, int newAnswer) :
+		guess(newGuess), answer(newAnswer) {}
+	int guess = 0;
+	int answer = 0;
+};
 
 class Task {
 public:
 	struct promise_type
 	{
 		using Handle = std::coroutine_handle<promise_type>;
-		std::vector<int> guesses;
-		std::vector<int> answers;
+		std::vector<Query> queries;
 
+		//promise_type() = default;
 		// for master ()
-		promise_type() = default;
 		promise_type(std::vector<Handle>* players);
 
 		// Compiler would give args from gamerSmart(id, master)
@@ -24,16 +32,19 @@ public:
 
 		Task get_return_object() { return Task(Handle::from_promise(*this)); }
 		std::suspend_always initial_suspend() { return {}; }
-		std::suspend_always final_suspend() noexcept { return {}; }
-		void return_void() noexcept {}
+		FinalMasterAwaiter final_suspend() noexcept;
+		//void return_void() noexcept {}
 		void unhandled_exception() { terminate(); }
+
+		void return_value(std::pair<int, int> end_query);
 
 		PlayerAwaiter yield_value(int my_guess);
 		MasterAwaiter yield_value(std::pair<int, int> waiting_query);
 
 	private:
-		Handle* master_h{};
-		std::vector<Handle>* total_players{};
+		std::coroutine_handle<> winner_handle = nullptr;
+		Handle* master_h = nullptr;
+		std::vector<Handle>* total_players = nullptr;
 	};
 
 #pragma region Rule of 5
