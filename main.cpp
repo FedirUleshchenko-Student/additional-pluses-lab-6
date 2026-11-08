@@ -38,10 +38,12 @@ int main() {
 
 	// link handles to corespondent coroutines
 	// ONLY POINTERS
-	master_h = mT.cor;
+	master_h = Task::promise_type::Handle::from_address(mT.cor.address());
 	int id = 0;
 	for (auto& x : plT) {
-		players_h.push_back(x.cor);
+		players_h.push_back(
+			Task::promise_type::Handle::from_address(x.cor.address())
+		);
 	}
 
 	// start THE GAME

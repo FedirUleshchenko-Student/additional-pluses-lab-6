@@ -34,7 +34,7 @@ public:
 		std::suspend_always initial_suspend() { return {}; }
 		FinalMasterAwaiter final_suspend() noexcept;
 		//void return_void() noexcept {}
-		void unhandled_exception() { terminate(); }
+		void unhandled_exception() { std::terminate(); }
 
 		void return_value(std::pair<int, int> end_query);
 
@@ -62,5 +62,5 @@ public:
 	void destroy();
 
 	// is a pointer?
-	promise_type::Handle cor{};
+	std::coroutine_handle<> cor{};
 };
