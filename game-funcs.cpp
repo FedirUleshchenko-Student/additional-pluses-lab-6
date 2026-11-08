@@ -69,14 +69,6 @@ Task gamerSmart(int id, Task::promise_type::Handle* master) {
 
 	updateRanges(l, r, q_it1, q_it2);
 
-	//auto outputAllQueries = [&]() {
-	//	cout << "id = " << id << " guesses : ";
-	//	for (auto& x : master->promise().queries) {
-	//		cout << "[" << x.guess << ", " << x.answer << "] ";
-	//	}
-	//	cout << endl;
-	//	};
-
 	int questions = 0;
 	while (l + 1 < r) {
 		questions++;
@@ -96,36 +88,13 @@ Task gamerSmart(int id, Task::promise_type::Handle* master) {
 			<< ")" << endl;
 		if (!updateRanges(l, r, x.first, x.second))
 			break;
-		//outputAllQueries();
 	}
 
 	cout << "[Gamer " << id << "] YIPPE!!!!!!" << endl;
 	cout << "[Gamer " << id << "] I've won by bin search, with = "
 		<< questions << " queries (counded only MY queries)" << endl;
 	cout << "[Gamer " << id << "] I've won. Ending this gamer's coroutine" << endl;
-	//outputAllQueries();
 	co_return{};
-	/*
-	TEST_GUESS *= 15;
-	cout << "player id = " << id << " pushing = " << TEST_GUESS << endl;
-	//auto x = co_await PlayerAwaiter { TEST_GUESS, master };
-	auto x = co_yield TEST_GUESS;
-	cout << "id = " << id << " getter ans = [";
-
-	for (auto v = x.first; v != x.second; v++)
-		cout << (*v).answer << ((v+1 != x.second) ? " " : "");
-	cout << "]" << endl;
-
-	cout << "guesses : ";
-	cout << "id = " << id << " started guesses : ";
-	for (auto& [x, y] : master->promise().queries)
-		cout << x << " "; cout << endl;
-	cout << "id = " << id << " started answers : ";
-	for (auto& [y, x] : master->promise().queries)
-		cout << x << " "; cout << endl;
-	//co_await PlayerAwaiter{ TEST_GUESS * 10, master };
-	co_yield TEST_GUESS * 10;
-	*/
 }
 
 bool addIncluded(

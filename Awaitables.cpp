@@ -12,20 +12,13 @@ MasterAwaiter::MasterAwaiter(
 
 Task::promise_type::Handle
 MasterAwaiter::await_suspend(Task::promise_type::Handle master_h) noexcept {
-
-	//cout << "await_suspend master | answer = " << last_answer << endl;
-
 	if (last_answer != IGNORED_VALUE) {
 		master_h.promise().queries.back().answer = last_answer;
-		//for (auto& handle : *players) {
-		//	handle.promise().queries.back().answer = last_answer;
-		//}
 	}
 	return (*players)[next_player_id];
 }
 
 int MasterAwaiter::await_resume() const noexcept {
-	//cout << "await_resume master | guess = " << (*players)[next_player_id].promise().queries.back().guess << endl;
 	return (*players)[next_player_id].promise().queries.back().guess;
 }
 #pragma endregion

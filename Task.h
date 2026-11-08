@@ -23,7 +23,6 @@ public:
 		using Handle = std::coroutine_handle<promise_type>;
 		std::vector<Query> queries;
 
-		//promise_type() = default;
 		// for master ()
 		promise_type(std::vector<Handle>* players);
 
